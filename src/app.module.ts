@@ -10,7 +10,7 @@ import {MongooseModule} from "@nestjs/mongoose";
 
 @Module({
     imports: [
-        MongooseModule.forRoot('mongodb://admin:admin@localhost/admin'),
+        MongooseModule.forRoot('mongodb://admin:admin@mongo/admin'),
         ConfigModule.forRoot({isGlobal: true}),
         AuthModule,
         TopPageModule,
