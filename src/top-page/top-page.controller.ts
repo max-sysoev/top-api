@@ -3,7 +3,7 @@ import {
     Controller,
     Delete,
     Get,
-    HttpCode,
+    HttpCode, Logger,
     NotFoundException,
     Param,
     Patch,
@@ -19,13 +19,17 @@ import {TopPageService} from "./top-page.service";
 import {PRODUCT_NOT_FOUND_ERROR} from "../product/product.constants";
 import {TOP_PAGE_NOT_FOUND_ERROR} from "./top-page.constants";
 import {JwtAuthGuard} from "../auth/guards/jwt.guard";
+import {HhService} from "../hh/hh.service";
+import {Cron, CronExpression, SchedulerRegistry} from "@nestjs/schedule";
 
 @Controller('top-page')
 export class TopPageController {
 
     constructor(
         private readonly configService: ConfigService,
-        private readonly topPageService: TopPageService
+        private readonly topPageService: TopPageService,
+        private readonly hhService: HhService,
+        private readonly scheduleRegistry: SchedulerRegistry
     ){}
 
     //TODO: Unique alias error gives 500 Internal Server Error message
@@ -90,5 +94,28 @@ export class TopPageController {
     @Get('textSearch/:text')
     async textSearch(@Param('text') text: string){
         return await this.topPageService.findByText(text);
+    }
+
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {name: 'test'})
+    @Post('test')
+    async test(){
+        const job = this.scheduleRegistry.getCronJob('test');
+
+        const data = await this.topPageService.findForHhUpdate(new Date());
+        for(let page of data){
+            const hhData = await this.hhService.getData(page.category);
+            page.hh = hhData;
+            await this.sleep();
+            Logger.log('hhData', hhData);
+            await this.topPageService.updateById(page._id, page);
+        }
+    }
+
+    sleep() {
+        return new Promise<void>((resolve, reject) => {
+            setTimeout(() => {
+                resolve();
+            }, 1000)
+        })
     }
 }

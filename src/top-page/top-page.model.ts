@@ -1,7 +1,8 @@
 import {Prop, Schema, SchemaFactory} from "@nestjs/mongoose";
-import {HydratedDocument} from "mongoose";
+import {HydratedDocument, SchemaTimestampsConfig, } from "mongoose";
 
-export type TopPageDocument = HydratedDocument<TopPageModel>
+// export type TopPageDocument = HydratedDocument<TopPageModel>
+export type TopPageDocument = SchemaTimestampsConfig & HydratedDocument<TopPageModel>
 
 export class HhData {
 
@@ -16,6 +17,9 @@ export class HhData {
 
     @Prop()
     seniorSalary: number;
+
+    @Prop()
+    updatedAt: Date;
 }
 
 export class TopPageAdvantage {

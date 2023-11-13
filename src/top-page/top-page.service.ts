@@ -1,18 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {InjectModel} from "@nestjs/mongoose";
-import {ProductModel} from "../product/product.model";
-import {Model} from "mongoose";
-import {TopLevelCategory, TopPageModel} from "./top-page.model";
-import {CreateProductDto} from "../product/dto/create-product-dto";
+import {Model, Types} from "mongoose";
+import {TopLevelCategory, TopPageDocument, TopPageModel} from "./top-page.model";
 import {CreateTopPageDto} from "./dto/create-top-page.dto";
-import {FindProductDto} from "../product/dto/find-product.dto";
-import {ReviewModel} from "../review/review.model";
-import {FindTopPageDto} from "./dto/find-top-page.dto";
+import {subDays} from "date-fns";
 
 @Injectable()
 export class TopPageService {
 
-    constructor(@InjectModel(TopPageModel.name) private readonly topPageModel: Model<TopPageModel>) {
+    constructor(@InjectModel(TopPageModel.name) private readonly topPageModel: Model<TopPageDocument>) {
     }
 
     async create(dto: CreateTopPageDto): Promise<TopPageModel> {
@@ -22,8 +18,13 @@ export class TopPageService {
     async findById(id: string) {
         return this.topPageModel.findById(id).exec()
     }
+
     async findByAlias(alias: string) {
-        return this.topPageModel.findOne({alias}).exec()
+        return this.topPageModel.findOne({alias}).exec();
+    }
+
+    async findAll() {
+        return this.topPageModel.find().exec();
     }
 
     async findByCategory(firstCategory: TopLevelCategory) {
@@ -64,8 +65,18 @@ export class TopPageService {
         return this.topPageModel.findByIdAndDelete(id).exec();
     }
 
-    async updateById(id: string, dto: CreateTopPageDto) {
+    async updateById(id: string | Types.ObjectId, dto: CreateTopPageDto) {
         return this.topPageModel.findByIdAndUpdate(id, dto, {new: true}).exec();
+    }
+
+    async findForHhUpdate(date: Date) {
+        return this.topPageModel.find({
+            firstCategory: 0,
+            $or: [
+                {'hh.updated.At': { $lt: subDays(date, 1)}},
+                {'hh.updated.At': { $exists: false }}
+            ]
+        }).exec();
     }
 
 }
